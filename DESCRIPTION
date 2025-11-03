@@ -1,0 +1,11 @@
+Package: diagnosR
+Title: Quick Diagnostic Panel for LM
+Version: 0.0.0.9000
+Authors@R: person("Ian", "Njuguna", email = "njugunaian001@gmail.com", role = c("aut","cre"))
+Description: One-call diagnostic plots for linear models.
+License: MIT
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: stats,lmtest,ggplot2,gridExtra
+Depends: R (>= 3.5.0)
