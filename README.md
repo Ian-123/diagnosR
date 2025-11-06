@@ -13,6 +13,7 @@ remotes::install_github("Ian-123/diagnosR")
 - **Compact Scorecard**: One-page summary of key diagnostics.Autocorrelation Tests.
 
 **Example**
+
 m <- lm(Sepal.Length ~ Sepal.Width + Petal.Length, data = iris) 
 - diag_plots(m) # base R diagnostics plots for linearity, normality, homoskedasticity, influence,independence
 - diag_scorecard(m) # returns a report of basic and added diagnostics in one page
