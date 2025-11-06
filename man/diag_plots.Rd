@@ -2,42 +2,43 @@
 % Please edit documentation in R/diag_plots.R
 \name{diag_plots}
 \alias{diag_plots}
-\title{Diagnostic plot panel for linear models}
+\title{Automatic diagnostic plots in base R style (multi-page) + leverage + labels}
 \usage{
 diag_plots(
   model,
   data = NULL,
-  y = NULL,
-  x_vars = NULL,
-  order_index = NULL,
-  save_path = NULL
+  per_page = 4,
+  label_influential = TRUE,
+  label_which = c("both", "cook", "leverage"),
+  label_top = NULL,
+  cook_cut = NULL,
+  lev_cut = NULL,
+  labels = NULL
 )
 }
 \arguments{
-\item{model}{A fitted lm object.}
+\item{model}{Fitted lm object.}
 
-\item{data}{Optional data.frame used to fit the model
-(if not supplied, tries to extract via model.frame()).}
+\item{data}{Optional data frame used to fit model.}
 
-\item{y}{Name of response variable (character). If NULL,
-inferred from the model.}
+\item{per_page}{Plots per page after the standard 3x3 panel.}
 
-\item{x_vars}{Character vector of up to 2 predictor names
-to show residual-vs-X plots. If NULL, uses the first two
-non-intercept terms in the model.}
+\item{label_influential}{logical; if TRUE, label influential points on the
+Residuals vs Leverage plot. Default TRUE.}
 
-\item{order_index}{Optional numeric/ordering index for the
-independence plot. If NULL, uses the row order in data/model.}
+\item{label_which}{one of c("both","cook","leverage"); which criterion to use
+for labeling. Default "both".}
 
-\item{save_path}{Optional file path (e.g., "diag_panel.png").
-If supplied, the panel will be saved (PNG) and device closed.}
-}
-\value{
-Invisibly returns a list with components used for plotting.
+\item{label_top}{integer or NULL; if set, label only the top-k by Cook's D
+among those exceeding the chosen thresholds (helps avoid clutter). Default NULL = label all exceeding.}
+
+\item{cook_cut}{Cook's D cutoff; default 4/n (common rule-of-thumb).}
+
+\item{lev_cut}{Leverage cutoff; default 2p/n.}
+
+\item{labels}{optional character vector of point labels (length n). If NULL,
+uses rownames(data/model.frame) or indices.}
 }
 \description{
-Produces a 3x3 base-R panel that replicates the common
-checks you listed: linearity (vs Y and vs chosen Xs),
-outliers (studentized residuals), homoskedasticity,
-normal Q-Q, and independence (residuals over order).
+Automatic diagnostic plots in base R style (multi-page) + leverage + labels
 }

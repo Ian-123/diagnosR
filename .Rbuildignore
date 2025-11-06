@@ -1,2 +1,11 @@
-^diagnosR\.Rproj$
+^README\.html$
+^_quarto\.yml$
+^\.quarto$
+^docs$
+^pkgdown$
+^\.github$
+^\.vscode$
+^README\.Rmd$
 ^\.Rproj\.user$
+^diagnosR\.Rproj$
+^LICENSE\.md$
