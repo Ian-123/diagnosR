@@ -1,14 +1,18 @@
 #' Multicollinearity diagnostics: VIF/GVIF and Condition Number
 
+#'
+
 #' Uses `car::vif` (handles factors via GVIF) and `kappa` on X'X.
 
-#' Multicollinearity diagnostics: VIF/GVIF and Condition Number
+#'
 
 #' @param model Fitted `lm` object.
 
 #' @param vif_threshold Flag threshold for adjusted-VIF (default 10).
 
 #' @param kappa_threshold Flag threshold for condition number (default 30).
+
+#' @param print Logical; if TRUE, prints the GVIF table and summary. Default TRUE.
 
 #' @return list(vif_table, max_adj_vif, kappa, flags)
 
@@ -20,11 +24,15 @@ diag_multicollinearity_tests <- function(model,
 
                                          vif_threshold = 10,
 
-                                         kappa_threshold = 30) {
+                                         kappa_threshold = 30,
+
+                                         print = TRUE) {
 
   stopifnot(inherits(model, "lm"))
 
   vif_table <- NULL
+
+
 
   # 1) Try car::vif matrix (GVIF, Df, GVIF^(1/(2*Df)))
 
@@ -79,6 +87,7 @@ diag_multicollinearity_tests <- function(model,
     }
 
   }
+
 
 
   # 3) Last-resort: compute VIF from model matrix if still NULL
@@ -154,6 +163,7 @@ diag_multicollinearity_tests <- function(model,
   }
 
 
+
   # kappa
 
   Xk <- try(stats::model.matrix(model), silent = TRUE)
@@ -164,9 +174,13 @@ diag_multicollinearity_tests <- function(model,
 
   kappa_val <- if (!inherits(Xk, "try-error") && ncol(Xk) > 0) as.numeric(kappa(Xk)) else NA_real_
 
+
+
   max_adj_vif <- if (!is.null(vif_table) && any(!is.na(vif_table$adj_VIF)))
 
     max(vif_table$adj_VIF, na.rm = TRUE) else NA_real_
+
+
 
   flags <- list(
 
@@ -176,8 +190,43 @@ diag_multicollinearity_tests <- function(model,
 
   )
 
-  invisible(list(vif_table = vif_table, max_adj_vif = max_adj_vif,
 
-                 kappa = kappa_val, flags = flags))
+
+  # ---- Print if requested ----
+
+  if (isTRUE(print) && !is.null(vif_table) && nrow(vif_table) > 0) {
+
+    cat("\nGVIF table (car::vif)\n")
+
+    out <- vif_table[, c("variable", "GVIF", "Df", "adj_VIF")]
+
+    names(out) <- c("Variable", "GVIF", "Df", "GVIF^(1/(2*Df))")
+
+    print(out, row.names = FALSE)
+
+    cat(sprintf("\nMax adj VIF: %s\n",
+
+                ifelse(is.na(max_adj_vif), "NA", sprintf("%.3f", max_adj_vif))))
+
+    cat(sprintf("Kappa: %s\n",
+
+                ifelse(is.na(kappa_val), "NA", sprintf("%.3f", kappa_val))))
+
+  }
+
+
+
+  invisible(list(
+
+    vif_table = vif_table,
+
+    max_adj_vif = max_adj_vif,
+
+    kappa = kappa_val,
+
+    flags = flags
+
+  ))
 
 }
+
