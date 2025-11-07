@@ -1,8 +1,8 @@
 #' Multicollinearity diagnostics: VIF/GVIF and Condition Number
 
-#'
-
 #' Uses `car::vif` (handles factors via GVIF) and `kappa` on X'X.
+
+#' Multicollinearity diagnostics: VIF/GVIF and Condition Number
 
 #' @param model Fitted `lm` object.
 
@@ -10,15 +10,11 @@
 
 #' @param kappa_threshold Flag threshold for condition number (default 30).
 
-#' @return A list with $vif_table and $summary (invisibly). Also prints a compact summary.
-
-#' @importFrom stats var
+#' @return list(vif_table, max_adj_vif, kappa, flags)
 
 #' @importFrom car vif
 
 #' @export
-
-# R/diag_multicollinearity_tests.R
 
 diag_multicollinearity_tests <- function(model,
 
@@ -26,57 +22,57 @@ diag_multicollinearity_tests <- function(model,
 
                                          kappa_threshold = 30) {
 
-
-  # car::vif() with type='predictor' works with interactions
-
-  v <- tryCatch(
-
-    suppressMessages(vif(model, type = "predictor")),
-
-    error = function(e) { message("VIF failed: ", e$message); NULL }
-
-  )
-
-
-
+  stopifnot(inherits(model, "lm"))
 
   vif_table <- NULL
 
-  if (!is.null(v)) {
+  # 1) Try car::vif matrix (GVIF, Df, GVIF^(1/(2*Df)))
 
-    if (is.matrix(v)) {
+  v_mat <- try(suppressMessages(vif(model)), silent = TRUE)
 
-      # GVIF table
+  if (!inherits(v_mat, "try-error") && is.matrix(v_mat)) {
+
+    vif_table <- data.frame(
+
+      variable  = rownames(v_mat),
+
+      GVIF      = if ("GVIF" %in% colnames(v_mat)) v_mat[, "GVIF"] else NA_real_,
+
+      Df        = if ("Df"   %in% colnames(v_mat)) v_mat[, "Df"]   else 1L,
+
+      adj_VIF   = if ("GVIF^(1/(2*Df))" %in% colnames(v_mat)) {
+
+        v_mat[, "GVIF^(1/(2*Df))"]
+
+      } else v_mat[, "GVIF"]^(1/(2 * v_mat[, "Df"])),
+
+      row.names = NULL,
+
+      check.names = FALSE
+
+    )
+
+  } else {
+
+    # 2) Fallback: adjusted-only vector
+
+    v_vec <- try(suppressMessages(vif(model, type = "predictor")), silent = TRUE)
+
+    if (!inherits(v_vec, "try-error") && is.numeric(v_vec)) {
 
       vif_table <- data.frame(
 
-        variable = rownames(v),
+        variable  = names(v_vec),
 
-        Df       = if ("Df" %in% colnames(v)) v[, "Df"] else 1L,
+        GVIF      = NA_real_,
 
-        GVIF     = if ("GVIF" %in% colnames(v)) v[, "GVIF"] else NA_real_,
+        Df        = 1L,
 
-        adj_VIF  = if ("GVIF^(1/(2*Df))" %in% colnames(v)) v[, "GVIF^(1/(2*Df))"] else as.numeric(v[,1]),
+        adj_VIF   = as.numeric(v_vec),
 
-        row.names = NULL
+        row.names = NULL,
 
-      )
-
-    } else if (is.numeric(v)) {
-
-      # type='predictor' often returns a named numeric vector of adjusted VIFs
-
-      vif_table <- data.frame(
-
-        variable = names(v),
-
-        Df       = 1L,
-
-        GVIF     = NA_real_,
-
-        adj_VIF  = as.numeric(v),
-
-        row.names = NULL
+        check.names = FALSE
 
       )
 
@@ -85,59 +81,103 @@ diag_multicollinearity_tests <- function(model,
   }
 
 
+  # 3) Last-resort: compute VIF from model matrix if still NULL
 
-  # Condition number (exclude intercept)
+  if (is.null(vif_table)) {
 
-  X <- tryCatch(stats::model.matrix(model), error = function(e) NULL)
+    X <- try(stats::model.matrix(model), silent = TRUE)
 
-  if (!is.null(X) && "(Intercept)" %in% colnames(X)) {
+    if (!inherits(X, "try-error")) {
 
-    X <- X[, setdiff(colnames(X), "(Intercept)"), drop = FALSE]
+      if ("(Intercept)" %in% colnames(X)) {
+
+        X <- X[, setdiff(colnames(X), "(Intercept)"), drop = FALSE]
+
+      }
+
+      keep <- apply(X, 2, function(z) is.finite(stats::var(z)) && stats::var(z) > 0)
+
+      if (any(keep)) {
+
+        X <- X[, keep, drop = FALSE]
+
+        nm <- colnames(X)
+
+        vifv <- rep(NA_real_, ncol(X)); names(vifv) <- nm
+
+        if (ncol(X) == 1L) {
+
+          vifv[] <- 1
+
+        } else {
+
+          for (j in seq_along(nm)) {
+
+            yj <- X[, j]; Z <- X[, -j, drop = FALSE]
+
+            fit <- try(stats::lm.fit(Z, yj), silent = TRUE)
+
+            if (!inherits(fit, "try-error")) {
+
+              rss <- sum(fit$residuals^2); tss <- sum((yj - mean(yj))^2)
+
+              R2 <- if (tss > 0) 1 - rss/tss else NA_real_
+
+              if (!is.na(R2) && R2 < 1) vifv[j] <- 1/(1 - R2)
+
+            }
+
+          }
+
+        }
+
+        vif_table <- data.frame(
+
+          variable = names(vifv),
+
+          GVIF     = NA_real_,
+
+          Df       = 1L,
+
+          adj_VIF  = as.numeric(vifv),
+
+          row.names = NULL,
+
+          check.names = FALSE
+
+        )
+
+      }
+
+    }
 
   }
 
-  kappa_val <- if (!is.null(X) && ncol(X) > 0) as.numeric(kappa(X)) else NA_real_
 
+  # kappa
 
+  Xk <- try(stats::model.matrix(model), silent = TRUE)
 
-  max_adj_vif <- if (!is.null(vif_table)) max(vif_table$adj_VIF, na.rm = TRUE) else NA_real_
+  if (!inherits(Xk, "try-error") && "(Intercept)" %in% colnames(Xk))
 
-  bad_vif_vars <- if (!is.null(vif_table)) paste(vif_table$variable[vif_table$adj_VIF > vif_threshold], collapse = ", ") else "None"
+    Xk <- Xk[, setdiff(colnames(Xk), "(Intercept)"), drop = FALSE]
 
+  kappa_val <- if (!inherits(Xk, "try-error") && ncol(Xk) > 0) as.numeric(kappa(Xk)) else NA_real_
 
+  max_adj_vif <- if (!is.null(vif_table) && any(!is.na(vif_table$adj_VIF)))
 
-  cat("\n=== Multicollinearity diagnostics ===\n")
+    max(vif_table$adj_VIF, na.rm = TRUE) else NA_real_
 
-  if (!is.null(vif_table)) {
+  flags <- list(
 
-    print(vif_table, row.names = FALSE)
+    vif_ok   = is.na(max_adj_vif) || max_adj_vif <= vif_threshold,
 
-    cat(sprintf("\nMax adjusted VIF: %.3f  (threshold  %.1f)\n", max_adj_vif, vif_threshold))
+    kappa_ok = is.na(kappa_val)   || kappa_val   <  kappa_threshold
 
-    cat("Over threshold: ", if (bad_vif_vars == "") "None" else bad_vif_vars, "\n", sep = "")
-
-  } else {
-
-    cat("VIF unavailable (see message above).\n")
-
-  }
-
-  cat(sprintf("Condition number (kappa): %s  (flag if  %.0f)\n",
-
-              ifelse(is.na(kappa_val), "NA", sprintf("%.3f", kappa_val)),
-
-              kappa_threshold))
-
-  cat("=====================================\n\n")
-
-
+  )
 
   invisible(list(vif_table = vif_table, max_adj_vif = max_adj_vif,
 
-                 kappa = kappa_val,
-
-                 bad_vars = if (bad_vif_vars %in% c("", "None")) character(0) else strsplit(bad_vif_vars, ",\\s*")[[1]]))
+                 kappa = kappa_val, flags = flags))
 
 }
-
-
