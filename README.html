@@ -354,28 +354,59 @@ display: none;
 
 <div id="diagnosr" class="section level1">
 <h1>DiagnosR</h1>
-<p><strong>Quick Diagnostic Panel for Linear Models</strong>
-<code>diagnosR</code> provides a one-call solution for generating
+<p><strong>Quick Diagnostic Panel for Linear Models</strong></p>
+<p><code>diagnosR</code> provides a one-call solution for generating
 diagnostic plots and tests for linear regression models
-(<code>lm</code>). It helps identify common issues such as
-multicollinearity, autocorrelation, influential observations, and more.
-# a install.packages(“remotes”) # if needed, that is, check if you have
-package already installed and install if not
-remotes::install_github(“Ian-123/diagnosR”) # or
-install.packages(???devtools???) # installs devtools #
-devtools::install_github(???Ian-123/diagnosR???) #local install #load
-library(diagnosR) ## b( Features - <strong>Diagnostic Plots</strong>:
-Residuals vs fitted, Cook’s distance, leverage plots, Q-Q plots. -
-<strong>Multicollinearity Checks</strong>: VIF/GVIF and condition
-number. - <strong>Autocorrelation Tests</strong>: Durbin???Watson and
-Breusch???Godfrey (with Ljung???Box fallback). - <strong>Compact
-Scorecard</strong>: One-page summary of key diagnostics.Autocorrelation
-Tests. Example m &lt;- lm(Sepal.Length ~ Sepal.Width + Petal.Length,
-data = iris) diag_plots(m) # base R diagnostics plots for linearity,
-normality, homoskedasticity, influence,independence diag_scorecard(m) #
-returns a report of basic and added diagnostics in one page
-diag_multicollinearity_tests(m) # Multicollinearity diagnostics
-diag_autocorr_tests(m) # Autocorrelation tests</p>
+(<code>lm</code>).<br />
+It helps identify common issues such as multicollinearity,
+autocorrelation, influential observations, and more.</p>
+<hr />
+</div>
+<div id="how-to-install-the-package" class="section level1">
+<h1>How to install the package</h1>
+<div id="option-1-using-remotes" class="section level2">
+<h2>Option 1: Using remotes</h2>
+<p>install.packages(“remotes”) # if not already installed</p>
+<p>library(remotes)</p>
+<p>remotes::install_github(“Ian-123/diagnosR”)</p>
+<p>library(diagnosR)</p>
+</div>
+<div id="option-2-using-devtool" class="section level2">
+<h2>Option 2: Using devtool</h2>
+<p>install.packages(“devtools”) # Install devtools (only if not
+installed)</p>
+<p>library(devtools) # Load devtools</p>
+<p>install_github(“Ian-123/diagnosR”) # Install your package from
+GitHub</p>
+<p>library(diagnosR) # Load your package</p>
+<hr />
+</div>
+</div>
+<div id="features" class="section level1">
+<h1>Features</h1>
+<ul>
+<li><strong>Diagnostic Plots</strong>: Residuals vs fitted, Cook’s
+distance, leverage plots, Q-Q plots.</li>
+<li><strong>Multicollinearity Checks</strong>: VIF/GVIF and condition
+number.</li>
+<li><strong>Autocorrelation Tests</strong>: Durbin Watson and Breusch
+Godfrey (with Ljung Box fallback).</li>
+<li><strong>Compact Scorecard</strong>: One-page summary of key
+diagnostics.Autocorrelation Tests.</li>
+</ul>
+<hr />
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<p>m &lt;- lm(Sepal.Length ~ Sepal.Width + Petal.Length, data =
+iris)</p>
+<p>diag_plots(m) <strong>Base R diagnostic plots for linearity,
+normality, homoskedasticity, and influence</strong></p>
+<p>diag_scorecard(m) <strong>Compact one-page scorecard of key
+diagnostics</strong></p>
+<p>diag_multicollinearity_tests(m) <strong>Multicollinearity
+diagnostics</strong></p>
+<p>diag_autocorr_tests(m) <strong>Autocorrelation tests</strong></p>
 </div>
 
 
