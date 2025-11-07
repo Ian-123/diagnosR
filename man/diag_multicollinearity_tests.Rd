@@ -2,7 +2,9 @@
 % Please edit documentation in R/diag_multicollinearity_tests.R
 \name{diag_multicollinearity_tests}
 \alias{diag_multicollinearity_tests}
-\title{Multicollinearity diagnostics: VIF/GVIF and Condition Number}
+\title{Multicollinearity diagnostics: VIF/GVIF and Condition Number
+Uses \code{car::vif} (handles factors via GVIF) and \code{kappa} on X'X.
+Multicollinearity diagnostics: VIF/GVIF and Condition Number}
 \usage{
 diag_multicollinearity_tests(model, vif_threshold = 10, kappa_threshold = 30)
 }
@@ -14,8 +16,10 @@ diag_multicollinearity_tests(model, vif_threshold = 10, kappa_threshold = 30)
 \item{kappa_threshold}{Flag threshold for condition number (default 30).}
 }
 \value{
-A list with $vif_table and $summary (invisibly). Also prints a compact summary.
+list(vif_table, max_adj_vif, kappa, flags)
 }
 \description{
+Multicollinearity diagnostics: VIF/GVIF and Condition Number
 Uses \code{car::vif} (handles factors via GVIF) and \code{kappa} on X'X.
+Multicollinearity diagnostics: VIF/GVIF and Condition Number
 }
