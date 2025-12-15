@@ -62,7 +62,6 @@ v_mat <- try(suppressMessages(car::vif(model)), silent = TRUE)
 
   } else {
 
-    # 2) Fallback: adjusted-only vector
 # 2) Fallback: adjusted-only vector
 v_vec <- try(suppressMessages(car::vif(model, type = "predictor")), silent = TRUE)
 
@@ -239,5 +238,6 @@ if (!inherits(v_vec, "try-error") && is.numeric(v_vec)) {
   ))
 
 }
+
 
 
