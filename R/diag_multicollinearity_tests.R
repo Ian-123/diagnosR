@@ -97,7 +97,7 @@ if (!inherits(v_vec, "try-error") && is.numeric(v_vec)) {
     check.names = FALSE
   )
 }
-
+}
 
   # 3) Last-resort: compute VIF from model matrix if still NULL
 
@@ -238,6 +238,7 @@ if (!inherits(v_vec, "try-error") && is.numeric(v_vec)) {
   ))
 
 }
+
 
 
 
