@@ -36,7 +36,7 @@ diag_multicollinearity_tests <- function(model,
 
   # 1) Try car::vif matrix (GVIF, Df, GVIF^(1/(2*Df)))
 
-  v_mat <- try(suppressMessages(vif(model)), silent = TRUE)
+v_mat <- try(suppressMessages(car::vif(model)), silent = TRUE)
 
   if (!inherits(v_mat, "try-error") && is.matrix(v_mat)) {
 
@@ -63,31 +63,41 @@ diag_multicollinearity_tests <- function(model,
   } else {
 
     # 2) Fallback: adjusted-only vector
+# 2) Fallback: adjusted-only vector
+v_vec <- try(suppressMessages(car::vif(model, type = "predictor")), silent = TRUE)
 
-    v_vec <- try(suppressMessages(vif(model, type = "predictor")), silent = TRUE)
+if (!inherits(v_vec, "try-error") && is.numeric(v_vec)) {
 
-    if (!inherits(v_vec, "try-error") && is.numeric(v_vec)) {
+  # car::vif() may return an unnamed numeric (or a numeric matrix)
+  v_num <- as.numeric(v_vec)
+  n <- length(v_num)
 
-      vif_table <- data.frame(
+  var_names <- names(v_vec)
 
-        variable  = names(v_vec),
-
-        GVIF      = NA_real_,
-
-        Df        = 1L,
-
-        adj_VIF   = as.numeric(v_vec),
-
-        row.names = NULL,
-
-        check.names = FALSE
-
-      )
-
+  # If names are missing, try to recover from model matrix; else create placeholders
+  if (is.null(var_names) || length(var_names) != n) {
+    mm <- try(stats::model.matrix(model), silent = TRUE)
+    if (!inherits(mm, "try-error")) {
+      cn <- colnames(mm)
+      cn <- setdiff(cn, "(Intercept)")
+      if (length(cn) == n) {
+        var_names <- cn
+      }
     }
-
+  }
+  if (is.null(var_names) || length(var_names) != n) {
+    var_names <- paste0("V", seq_len(n))
   }
 
+  vif_table <- data.frame(
+    variable  = var_names,
+    GVIF      = rep(NA_real_, n),
+    Df        = rep(1L, n),
+    adj_VIF   = v_num,
+    row.names = NULL,
+    check.names = FALSE
+  )
+}
 
 
   # 3) Last-resort: compute VIF from model matrix if still NULL
@@ -229,4 +239,5 @@ diag_multicollinearity_tests <- function(model,
   ))
 
 }
+
 
